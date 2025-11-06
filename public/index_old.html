@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD de Autor</title>
+    <style>
+        /* CSS Básico (Simulando el CSS Suministrado) */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #eef1f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h2, h3 {
+            text-align: center;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #34495e;
+        }
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #bdc3c7;
+            border-radius: 6px;
+            box-sizing: border-box; 
+            transition: border-color 0.3s;
+        }
+        .form-group input[type="text"]:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .button-group button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            color: white;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        .button-group button:hover {
+            transform: translateY(-2px);
+        }
+        /* Estilos específicos para las acciones CRUD */
+        .button-create { background-color: #2ecc71; } /* Verde para Crear */
+        .button-update { background-color: #f39c12; } /* Naranja para Actualizar */
+        .button-delete { background-color: #e74c3c; } /* Rojo para Eliminar */
+        .button-list { background-color: #3498db; }  /* Azul para Listar */
+
+        /* Estilos para la tabla (Read) */
+        .table-container {
+            margin-top: 40px;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #ecf0f1;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #2c3e50;
+            color: white;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        tbody tr:hover {
+            background-color: #e0f7fa;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>📚 Gestión de Autores (CRUD)</h2>
+
+        <form id="autorForm" method="POST" action="/api/autor">
+            <p>Utilice este formulario para crear, actualizar o eliminar un autor.</p>
+            
+            <input type="hidden" id="id" name="id" value="" placeholder="ID del autor"> 
+
+            <div class="form-group">
+                <label for="nombre">Nombre del Autor (*)</label>
+                <input type="text" id="nombre" name="nombre" placeholder="Ej: Gabriel García Márquez" maxlength="100" required>
+            </div>
+
+            <div class="form-group">
+                <label for="nacionalidad">Nacionalidad</label>
+                <input type="text" id="nacionalidad" name="nacionalidad" placeholder="Ej: Colombiana" maxlength="50">
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="button-create" onclick="this.form.action='/api/autor/create';">Crear</button>
+                <button type="submit" class="button-update" onclick="this.form.action='/api/autor/update';">Actualizar</button>
+                <button type="submit" class="button-delete" onclick="this.form.action='/api/autor/delete';">Eliminar</button>
+                <button type="reset" class="button-list" style="background-color: #95a5a6;">Limpiar Formulario</button>
+            </div>
+        </form>
+
+        <hr>
+
+        <div class="table-container">
+            <h3>📖 Listado de Autores Existentes</h3>
+            <p>Esta tabla representa la vista de los registros almacenados en la base de datos.</p>
+            
+            <div class="button-group" style="justify-content: flex-start;">
+                <button class="button-list" onclick="alert('Lógica para obtener y mostrar la lista de autores...');">Actualizar Lista</button>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Nacionalidad</th>
+                        <th>Fecha Creación</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>Gabriel García Márquez</td>
+                        <td>Colombiana</td>
+                        <td>2024-01-15 10:30:00</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>Isabel Allende</td>
+                        <td>Chilena</td>
+                        <td>2024-02-20 12:45:00</td>
+                    </tr>
+                    </tbody>
+            </table>
+        </div>
+
+    </div>
+<script>
+    document.getElementById('autorForm').addEventListener('submit', function(event) {
+        // Previene el envío tradicional del formulario
+        event.preventDefault(); 
+
+        // Determina la URL y el método HTTP basado en la acción (ejemplo simple)
+        let method = 'POST';
+        let url = 'http://localhost:3000/api/autores'; // Endpoint de CREAR
+
+        // 1. Obtener los datos del formulario
+        const formData = {
+            nombre: document.getElementById('nombre').value,
+            nacionalidad: document.getElementById('nacionalidad').value
+        };
+
+        // 2. Enviar la petición a la API REST (Backend)
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.mensaje && data.mensaje.includes('creado')) {
+                alert('Autor Creado con éxito! ID: ' + data.id);
+                document.getElementById('autorForm').reset(); // Limpia el formulario
+            } else {
+                alert('Error al crear autor: ' + data.mensaje);
+            }
+        })
+        .catch(error => {
+            console.error('Error de conexión:', error);
+            alert('No se pudo conectar al servidor API. Asegúrese de que Node.js está corriendo.');
+        });
+    });
+</script>
+</body>
+</html>
