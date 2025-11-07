@@ -1,50 +1,97 @@
 // server.js
-
 const express = require('express');
-const autorController = require('./autorController');
-const path = require('path'); // Importar el módulo path
+const cors = require('cors');
+const { query } = require('./db'); // <- tu helper de pg
 
 const app = express();
-const PORT = 3000;
 
-// Middleware para parsear el cuerpo de las peticiones a JSON
-app.use(express.json());
+// Middlewares básicos
+app.use(cors());
+app.use(express.json()); // importante para leer JSON en POST/PUT
 
-// 💡 LÍNEA CLAVE 1: Configurar Express para servir archivos estáticos (HTML, CSS, JS)
-// Esto mapea la carpeta 'public' a la raíz del servidor '/'
-app.use(express.static(path.join(__dirname, 'public')));
-
-// 💡 LÍNEA CLAVE 2: Definir la ruta raíz para servir el archivo principal
-// Cuando alguien acceda a http://localhost:3000/, servirá el archivo autor_crud.html
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+// Healthchecks
+app.get('/', (_req, res) => res.send('API OK'));
+app.get('/db/ping', async (_req, res) => {
+  try {
+    const [rows] = await query('SELECT 1 AS ok');
+    res.json({ ok: rows?.[0]?.ok === 1 });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
 });
 
-// ----------------------
-// ENDPOINTS DE LA API (CRUD)
-// ----------------------
+/* ========= EJEMPLOS CRUD (puedes borrarlos o adaptarlos a tus tablas) ========= */
 
-// C: CREATE - Crear un nuevo autor
-// POST http://localhost:3000/api/autores
-app.post('/api/autores', autorController.crearAutor);
-
-// R: READ - Obtener todos los autores
-// GET http://localhost:3000/api/autores
-app.get('/api/autores', autorController.obtenerAutores);
-
-// R: READ - Obtener un autor por ID
-// GET http://localhost:3000/api/autores/123
-app.get('/api/autores/:id', autorController.obtenerAutorPorId);
-
-// U: UPDATE - Actualizar un autor por ID
-// PUT http://localhost:3000/api/autores/123
-app.put('/api/autores/:id', autorController.actualizarAutor);
-
-// D: DELETE - Eliminar un autor por ID
-// DELETE http://localhost:3000/api/autores/123
-app.delete('/api/autores/:id', autorController.eliminarAutor);
-
-// Inicializar el servidor
-app.listen(PORT, () => {
-    console.log(`🚀 Servidor API REST escuchando en http://localhost:${PORT}`);
+// Crea tabla de ejemplo si no existe (para pruebas rápidas)
+app.get('/setup', async (_req, res) => {
+  try {
+    await query(`
+      CREATE TABLE IF NOT EXISTS items(
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(120) NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    res.json({ created: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
+
+// Listar
+app.get('/api/items', async (_req, res) => {
+  const [rows] = await query('SELECT id, name, created_at FROM items ORDER BY id DESC');
+  res.json(rows);
+});
+
+// Crear (nota: Postgres usa $1, $2... en vez de ?)
+app.post('/api/items', async (req, res) => {
+  const { name } = req.body || {};
+  if (!name) return res.status(400).json({ error: 'name requerido' });
+
+  const [rows] = await query(
+    'INSERT INTO items(name) VALUES($1) RETURNING id, name, created_at',
+    [name]
+  );
+  res.status(201).json(rows[0]);
+});
+
+// Detalle
+app.get('/api/items/:id', async (req, res) => {
+  const { id } = req.params;
+  const [rows] = await query('SELECT id, name, created_at FROM items WHERE id = $1', [id]);
+  if (!rows.length) return res.status(404).json({ error: 'No encontrado' });
+  res.json(rows[0]);
+});
+
+// Actualizar
+app.put('/api/items/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name } = req.body || {};
+  if (!name) return res.status(400).json({ error: 'name requerido' });
+
+  const [rows] = await query(
+    'UPDATE items SET name = $1 WHERE id = $2 RETURNING id, name, created_at',
+    [name, id]
+  );
+  if (!rows.length) return res.status(404).json({ error: 'No encontrado' });
+  res.json(rows[0]);
+});
+
+// Borrar
+app.delete('/api/items/:id', async (req, res) => {
+  const { id } = req.params;
+  const [rows] = await query(
+    'DELETE FROM items WHERE id = $1 RETURNING id, name, created_at',
+    [id]
+  );
+  if (!rows.length) return res.status(404).json({ error: 'No encontrado' });
+  res.json({ deleted: rows[0] });
+});
+
+// === Arranque (Render necesita PORT dinámico y host 0.0.0.0) ===
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server on http://localhost:${PORT}`);
+});
+// db.js  (versión PostgreSQL compatible con mysql2-style)
