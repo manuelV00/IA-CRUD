@@ -6,97 +6,26 @@
     <title>CRUD de Autor</title>
     <style>
         /* CSS Básico (Simulando el CSS Suministrado) */
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 20px;
-            background-color: #eef1f5;
-        }
-        .container {
-            max-width: 800px;
-            margin: auto;
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-        h2, h3 {
-            text-align: center;
-            color: #2c3e50;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            color: #34495e;
-        }
-        .form-group input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #bdc3c7;
-            border-radius: 6px;
-            box-sizing: border-box; 
-            transition: border-color 0.3s;
-        }
-        .form-group input[type="text"]:focus {
-            border-color: #3498db;
-            outline: none;
-        }
-        .button-group {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 20px;
-        }
-        .button-group button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            color: white;
-            transition: background-color 0.3s, transform 0.1s;
-        }
-        .button-group button:hover {
-            transform: translateY(-2px);
-        }
-        /* Estilos específicos para las acciones CRUD */
-        .button-create { background-color: #2ecc71; } /* Verde para Crear */
-        .button-update { background-color: #f39c12; } /* Naranja para Actualizar */
-        .button-delete { background-color: #e74c3c; } /* Rojo para Eliminar */
-        .button-list { background-color: #3498db; }  /* Azul para Listar */
-
-        /* Estilos para la tabla (Read) */
-        .table-container {
-            margin-top: 40px;
-            overflow-x: auto;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        th, td {
-            border: 1px solid #ecf0f1;
-            padding: 12px;
-            text-align: left;
-        }
-        th {
-            background-color: #2c3e50;
-            color: white;
-        }
-        tbody tr:nth-child(even) {
-            background-color: #f8f9fa;
-        }
-        tbody tr:hover {
-            background-color: #e0f7fa;
-            cursor: pointer;
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #eef1f5; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,.1); }
+        h2, h3 { text-align: center; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #34495e; }
+        .form-group input[type="text"] { width: 100%; padding: 10px; border: 1px solid #bdc3c7; border-radius: 6px; box-sizing: border-box; transition: border-color .3s; }
+        .form-group input[type="text"]:focus { border-color: #3498db; outline: none; }
+        .button-group { display: flex; gap: 15px; justify-content: center; margin-top: 20px; }
+        .button-group button { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; transition: background-color .3s, transform .1s; }
+        .button-group button:hover { transform: translateY(-2px); }
+        .button-create { background-color: #2ecc71; }
+        .button-update { background-color: #f39c12; }
+        .button-delete { background-color: #e74c3c; }
+        .button-list { background-color: #3498db; }
+        .table-container { margin-top: 40px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ecf0f1; padding: 12px; text-align: left; }
+        th { background-color: #2c3e50; color: white; }
+        tbody tr:nth-child(even) { background-color: #f8f9fa; }
+        tbody tr:hover { background-color: #e0f7fa; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -164,41 +93,82 @@
 
     </div>
 <script>
-    document.getElementById('autorForm').addEventListener('submit', function(event) {
-        // Previene el envío tradicional del formulario
-        event.preventDefault(); 
+    // ======== CAMBIO NECESARIO: usar URL relativa al backend desplegado ========
+    const BASE = '/api/autores';
 
-        // Determina la URL y el método HTTP basado en la acción (ejemplo simple)
+    document.getElementById('autorForm').addEventListener('submit', async function (event) {
+        event.preventDefault();
+
+        // Qué botón envió el formulario
+        const btn = document.activeElement;
+
+        // Datos comunes
+        const id = (document.getElementById('id').value || '').trim();
+        const nombre = document.getElementById('nombre').value.trim();
+        const nacionalidad = document.getElementById('nacionalidad').value.trim();
+
+        let url = BASE;
         let method = 'POST';
-        let url = 'http://localhost:3000/api/autores'; // Endpoint de CREAR
+        let body = null;
 
-        // 1. Obtener los datos del formulario
-        const formData = {
-            nombre: document.getElementById('nombre').value,
-            nacionalidad: document.getElementById('nacionalidad').value
-        };
+        if (btn && btn.classList.contains('button-create')) {
+            // CREATE
+            if (!nombre) return alert('El nombre es obligatorio para crear.');
+            method = 'POST';
+            url = BASE;
+            body = JSON.stringify({ nombre, nacionalidad });
+        } else if (btn && btn.classList.contains('button-update')) {
+            // UPDATE
+            if (!id) return alert('Debe indicar el ID para actualizar.');
+            if (!nombre) return alert('El nombre es obligatorio para actualizar.');
+            method = 'PUT';
+            url = `${BASE}/${id}`;
+            body = JSON.stringify({ nombre, nacionalidad });
+        } else if (btn && btn.classList.contains('button-delete')) {
+            // DELETE
+            if (!id) return alert('Debe indicar el ID para eliminar.');
+            if (!confirm(`¿Eliminar el autor con ID ${id}?`)) return;
+            method = 'DELETE';
+            url = `${BASE}/${id}`;
+            body = null; // sin cuerpo para DELETE
+        } else {
+            // por defecto: crear
+            if (!nombre) return alert('El nombre es obligatorio para crear.');
+            method = 'POST';
+            url = BASE;
+            body = JSON.stringify({ nombre, nacionalidad });
+        }
 
-        // 2. Enviar la petición a la API REST (Backend)
-        fetch(url, {
-            method: method,
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.mensaje && data.mensaje.includes('creado')) {
-                alert('Autor Creado con éxito! ID: ' + data.id);
-                document.getElementById('autorForm').reset(); // Limpia el formulario
-            } else {
-                alert('Error al crear autor: ' + data.mensaje);
+        try {
+            const resp = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body
+            });
+
+            const data = await resp.json().catch(() => ({}));
+
+            if (!resp.ok) {
+                const msg = data.mensaje || data.error || `Error ${resp.status}`;
+                return alert(`Operación fallida: ${msg}`);
             }
-        })
-        .catch(error => {
-            console.error('Error de conexión:', error);
-            alert('No se pudo conectar al servidor API. Asegúrese de que Node.js está corriendo.');
-        });
+
+            if (method === 'POST') {
+                alert(`Autor creado con éxito. ID: ${data.id ?? '(desconocido)'}`);
+            } else if (method === 'PUT') {
+                alert('Autor actualizado exitosamente.');
+            } else if (method === 'DELETE') {
+                alert('Autor eliminado exitosamente.');
+            }
+
+            // Reset ligero tras éxito
+            this.reset();
+            document.getElementById('id').value = '';
+
+        } catch (e) {
+            console.error(e);
+            alert('No se pudo conectar al servidor API.');
+        }
     });
 </script>
 </body>

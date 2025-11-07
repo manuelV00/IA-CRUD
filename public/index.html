@@ -131,7 +131,8 @@
             <p>Esta tabla representa la vista de los registros almacenados en la base de datos.</p>
             
             <div class="button-group" style="justify-content: flex-start;">
-                <button class="button-list" onclick="alert('Lógica para obtener y mostrar la lista de autores...');">Actualizar Lista</button>
+                <!-- cambio mínimo: id y sin onclick -->
+                <button id="btnListar" class="button-list">Actualizar Lista</button>
             </div>
             
             <table>
@@ -162,7 +163,8 @@
 
     </div>
 <script>
-    const API_BASE_URL = 'http://localhost:3000/api/autores';
+    // cambio mínimo: quitar doble ';'
+    const API_BASE_URL = '/api/autores';
     const autorForm = document.getElementById('autorForm');
     const tableBody = document.querySelector('.table-container tbody');
 
@@ -171,7 +173,8 @@
     const btnUpdate = document.getElementById('btn-update');
     const btnDelete = document.getElementById('btn-delete');
     const inputId = document.getElementById('id');
-    const updateListButton = document.querySelector('.button-group button.button-list');
+    // cambio mínimo: usar id del botón
+    const updateListButton = document.getElementById('btnListar');
     
     // ==========================================================
     // FUNCIONES DE UTILIDAD
@@ -305,7 +308,7 @@
     // R - READ (Carga de datos y Selección de fila)
     // ==========================================================
     
-    // 💡 Nueva función: Cargar datos de la fila seleccionada al formulario
+    // Cargar datos de la fila seleccionada al formulario
     function seleccionarAutor(autor) {
         document.getElementById('id').value = autor.id;
         document.getElementById('nombre').value = autor.nombre;
@@ -313,10 +316,8 @@
     }
     
     async function cargarAutores() {
-        // ... (el código de la función cargarAutores que ya teníamos)
         try {
             const response = await fetch(API_BASE_URL);
-            
             if (!response.ok) {
                 throw new Error(`Error en la API: ${response.statusText}`);
             }
@@ -331,11 +332,13 @@
 
             autores.forEach(autor => {
                 const row = tableBody.insertRow();
-                
-                const fechaCreacion = new Date(autor.fecha_creacion).toLocaleString('es-CO', {
+
+                // cambio mínimo: fallback de fecha
+                const fechaCreacion = new Date(autor.creado_en || autor.fecha_creacion || autor.created_at || Date.now())
+                  .toLocaleString('es-CO', {
                     year: 'numeric', month: '2-digit', day: '2-digit', 
                     hour: '2-digit', minute: '2-digit', second: '2-digit'
-                });
+                  });
 
                 row.innerHTML = `
                     <td>${autor.id}</td>
@@ -354,7 +357,7 @@
         }
     }
 
-    // 4. ASIGNAR INICIO Y BOTÓN
+    // Asignar eventos
     updateListButton.onclick = cargarAutores;
     document.addEventListener('DOMContentLoaded', cargarAutores);
     
