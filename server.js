@@ -1,6 +1,7 @@
 // server.js
 const express = require('express');
 const cors = require('cors');
+const path = require('path');            // <- NUEVO
 const { query } = require('./db'); // <- tu helper de pg
 
 const app = express();
@@ -8,9 +9,14 @@ const app = express();
 // Middlewares básicos
 app.use(cors());
 app.use(express.json()); // importante para leer JSON en POST/PUT
+app.use(express.static(path.join(__dirname, 'public')));  // <- NUEVO
+
+// ===== Raíz: ahora sirve tu página =====
+app.get('/', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));  // <- CAMBIADO
+});
 
 // Healthchecks
-app.get('/', (_req, res) => res.send('API OK'));
 app.get('/db/ping', async (_req, res) => {
   try {
     const [rows] = await query('SELECT 1 AS ok');
@@ -44,7 +50,7 @@ app.get('/api/items', async (_req, res) => {
   res.json(rows);
 });
 
-// Crear (nota: Postgres usa $1, $2... en vez de ?)
+// Crear
 app.post('/api/items', async (req, res) => {
   const { name } = req.body || {};
   if (!name) return res.status(400).json({ error: 'name requerido' });
@@ -89,9 +95,8 @@ app.delete('/api/items/:id', async (req, res) => {
   res.json({ deleted: rows[0] });
 });
 
-// === Arranque (Render necesita PORT dinámico y host 0.0.0.0) ===
+// Arranque para Render (PORT dinámico + 0.0.0.0)
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server on http://localhost:${PORT}`);
 });
-// db.js  (versión PostgreSQL compatible con mysql2-style)
