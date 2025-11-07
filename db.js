@@ -7,7 +7,7 @@ const isProd = process.env.NODE_ENV === 'production';
 const pool = new Pool({
   connectionString:
     process.env.DATABASE_URL ||
-    'postgres://postgres:postgres@localhost:5432/ia_crud_dev',
+    'postgresql://ia_crud_db_user:HhNdlVRdAE7GlzqIqDIITFXimEXwzn1u@dpg-d474ej15pdvs73dmaoig-a.oregon-postgres.render.com/ia_crud_db',
   ssl: isProd ? { rejectUnauthorized: false } : false,
 });
 
