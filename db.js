@@ -2,13 +2,15 @@
 const { Pool } = require('pg');
 
 const isProd = process.env.NODE_ENV === 'production';
+// ⚠️ Cambio mínimo: si existe DATABASE_URL (Render), forzamos SSL
+const useSSL = !!process.env.DATABASE_URL || isProd;
 
-// Usa DATABASE_URL en Render. Para local, cambia la URL si tienes Postgres local.
 const pool = new Pool({
+  // Usa DATABASE_URL en Render. La de abajo es tu fallback con sslmode=require.
   connectionString:
     process.env.DATABASE_URL ||
-    'postgresql://ia_crud_db_user:HhNdlVRdAE7GlzqIqDIITFXimEXwzn1u@dpg-d474ej15pdvs73dmaoig-a.oregon-postgres.render.com/ia_crud_db',
-  ssl: isProd ? { rejectUnauthorized: false } : false,
+    'postgresql://ia_crud_db_user:HhNdlVRdAE7GlzqIqDIITFXimEXwzn1u@dpg-d474ej15pdvs73dmaoig-a.oregon-postgres.render.com/ia_crud_db?sslmode=require',
+  ssl: useSSL ? { rejectUnauthorized: false } : false,
 });
 
 /**
